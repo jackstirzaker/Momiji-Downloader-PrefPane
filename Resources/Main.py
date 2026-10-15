@@ -167,10 +167,8 @@ for release in releases:
 
 # Find the right download URL for this OS
 asset_suffix = ""
-if LooseVersion(platform.mac_ver()[0]) < LooseVersion("10.9"):
-	asset_suffix = "_macOS10.7-10.8.zip"
-elif LooseVersion(platform.mac_ver()[0]) < LooseVersion("10.12"):
-	asset_suffix = "_macOS10.9-10.11.zip"
+if LooseVersion(platform.mac_ver()[0]) < LooseVersion("10.12"):
+	asset_suffix = "_macOS10.7-10.11.zip"
 else:
 	asset_suffix = "_macOS10.12-10.14.zip"
 asset_to_download = find_asset(selected_build["assets"], lambda n: n.endswith(asset_suffix))
