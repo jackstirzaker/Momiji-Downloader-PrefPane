@@ -154,28 +154,40 @@ check_github_connection()
 
 releases = get_github_releases("aobaharuki2005", "momiji-web-browser", 10)
 
-release_strings = []
+
+mac_version = LooseVersion(platform.mac_ver()[0])
+if mac_version < LooseVersion("10.8"):
+	asset_suffixes = ("_macOS10.7-10.8.zip", "_macOS10.07-10.11.zip", "_macOS10.7-10.11.zip")
+elif mac_version < LooseVersion("10.9"):
+	asset_suffixes = ("_macOS10.8.zip", "_macOS10.7-10.8.zip", "_macOS10.07-10.11.zip", "_macOS10.7-10.11.zip")
+elif mac_version < LooseVersion("10.12"):
+	asset_suffixes = ("_macOS10.9-10.11.zip", "_macOS10.07-10.11.zip", "_macOS10.7-10.11.zip")
+else:
+	asset_suffixes = ("_macOS10.12-10.14.zip",)
+
+release_options = []
 for release in releases:
-	release_strings.append(release["tag_name"])
+	asset = find_asset(release["assets"], lambda n: n.endswith(asset_suffixes))
+	if asset is not None:
+		display_name = re.sub(r"_macOS.*$", "", asset["name"])
+		release_options.append((display_name, asset))
+
+release_strings = []
+for display_name, asset in release_options:
+	release_strings.append(display_name)
 
 selected_build_str = display_list(release_strings, "Momiji Downloader", "Choose a version of Momiji to install.")
 
-#Find index of selected_build_str
-for release in releases:
-	if release["tag_name"] == selected_build_str:
-		selected_build = release
+selected_asset = None
+for display_name, asset in release_options:
+	if display_name == selected_build_str:
+		selected_asset = asset
+		break
 
-# Find the right download URL for this OS
-asset_suffix = ""
-if LooseVersion(platform.mac_ver()[0]) < LooseVersion("10.12"):
-	asset_suffix = "_macOS10.7-10.11.zip"
-else:
-	asset_suffix = "_macOS10.12-10.14.zip"
-asset_to_download = find_asset(selected_build["assets"], lambda n: n.endswith(asset_suffix))
-if asset_to_download is None:
+if selected_asset is None:
 	run_gui_applescript('display alert "Download failed" as critical')
 	exit()
-download_url = asset_to_download["browser_download_url"]
+download_url = selected_asset["browser_download_url"]
 
 temp_directory = download_firefox_contents_to_temporary_directory(download_url)
 print(temp_directory)
